@@ -245,6 +245,11 @@ async function runCommand(raw: string, overrideStdin?: string) {
     }
 
     updateStatusCode(result.code);
+
+    if (result.clientAction?.type === 'openFile') {
+      const targetPath = result.clientAction.args[0];
+      if (targetPath) openEditor(targetPath);
+    }
   } catch (err) {
     term.write(`\r\n\x1b[31mError: ${(err as Error).message}\x1b[0m`);
     updateStatusCode(1);
@@ -380,8 +385,68 @@ function reset() {
   term.clear();
   inputBuffer = '';
   historyIndex = -1;
+  document.getElementById('editor-overlay')?.classList.add('hidden');
   boot();
 }
+
+// ── Editor ─────────────────────────────────────────────────────────────────────
+
+let currentEditingPath = '';
+
+function openEditor(filePath: string) {
+  currentEditingPath = filePath;
+  const overlay = document.getElementById('editor-overlay')!;
+  const title = document.getElementById('editor-title')!;
+  const textarea = document.getElementById('editor-textarea') as HTMLTextAreaElement;
+
+  title.textContent = `Editing: ${filePath}`;
+  const file = ctx.files[filePath];
+  textarea.value = file && file.type === 'file' ? (file.content ?? '') : '';
+  
+  overlay.classList.remove('hidden');
+  textarea.focus();
+}
+
+function closeEditor() {
+  currentEditingPath = '';
+  document.getElementById('editor-overlay')!.classList.add('hidden');
+  term.focus();
+}
+
+function saveEditor() {
+  if (!currentEditingPath) return;
+  const textarea = document.getElementById('editor-textarea') as HTMLTextAreaElement;
+  const content = textarea.value;
+  
+  if (!ctx.files[currentEditingPath]) {
+    const parts = currentEditingPath.split('/');
+    const name = parts.pop()!;
+    const dir = parts.join('/') || '/';
+    ctx.files[currentEditingPath] = { type: 'file', mode: 0o644, owner: USER, group: 'users', content };
+    const parent = ctx.files[dir];
+    if (parent && parent.type === 'directory' && !parent.children?.includes(name)) {
+      parent.children?.push(name);
+    }
+  } else {
+    ctx.files[currentEditingPath].content = content;
+    ctx.files[currentEditingPath].lastModified = new Date().toISOString();
+  }
+  
+  updateFsTree();
+}
+
+document.getElementById('editor-save-btn')?.addEventListener('click', saveEditor);
+document.getElementById('editor-close-btn')?.addEventListener('click', closeEditor);
+
+document.getElementById('editor-textarea')?.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault();
+    saveEditor();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    closeEditor();
+  }
+});
 
 document.getElementById('reset-btn')?.addEventListener('click', (e) => {
   e.preventDefault();

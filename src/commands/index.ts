@@ -49,7 +49,6 @@ export const emulatedCommands: Record<string, CommandFn> = {
     history,
     code,
     // grep,
-
     rm,
     cp,
     mv,
@@ -116,4 +115,5 @@ export const writeCommands: Record<string, string> = {
     git: 'git',
     sudo: 'sudo',
     code: 'code',
+
 };

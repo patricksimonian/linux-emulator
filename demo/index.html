@@ -199,6 +199,7 @@
       flex-direction: column;
       background: #090c10;
       overflow: hidden;
+      position: relative;
     }
 
     .term-topbar {
@@ -268,6 +269,49 @@
 
     .xterm-viewport {
       border-radius: 0;
+    }
+
+    /* ── Editor ── */
+    #editor-overlay {
+      position: absolute;
+      top: 33px;
+      left: 0;
+      right: 0;
+      bottom: 29px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+    }
+
+    #editor-overlay.hidden {
+      display: none;
+    }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      border-top: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    #editor-textarea {
+      flex: 1;
+      background: #090c10;
+      color: #e6edf3;
+      border: none;
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
     }
 
     /* ── Status bar ── */
@@ -372,6 +416,18 @@
         </div>
       </div>
       <div id="terminal-container"></div>
+      
+      <!-- Editor Overlay -->
+      <div id="editor-overlay" class="hidden">
+        <div class="editor-header">
+          <span id="editor-title">Editing: ...</span>
+          <div class="editor-actions term-actions">
+            <button id="editor-save-btn" class="term-btn">Save (Ctrl+S)</button>
+            <button id="editor-close-btn" class="term-btn">Close (Esc)</button>
+          </div>
+        </div>
+        <textarea id="editor-textarea" spellcheck="false"></textarea>
+      </div>
       <div class="status-bar">
         <div class="status-item">
           <div class="status-dot"></div>
