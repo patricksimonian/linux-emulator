@@ -1,11 +1,12 @@
 import { runInNewContext } from 'vm';
 import { EmulatorContext, CommandFn } from '../types';
 import { checkAccess, PERM_EXECUTE } from './permissions';
+import path from 'path';
 
 const VIRTUAL_CMD_TIMEOUT_MS = 5000;
 
 /**
- * Resolves a command from the virtual filesystem by traversing $PATH.
+ * Resolves a command from the virtual filesystem by traversing $PATH or via relative/absolute paths.
  * Only files with execute permission are considered.
  * Evaluated inside a Node.js vm sandbox — user code has no access to
  * the host filesystem, require(), process, or any Node built-ins.
@@ -15,11 +16,20 @@ export function resolveVirtualCommand(
     context: EmulatorContext,
     accountName: string
 ): CommandFn | null {
-    const pathDirs = (context.env['PATH'] || '/usr/local/bin:/usr/bin:/bin').split(':');
+    let targetPaths: string[] = [];
 
-    for (const dir of pathDirs) {
-        const normalizedDir = dir.replace(/\/+$/, '');
-        const filePath = `${normalizedDir}/${commandName}`;
+    if (commandName.includes('/')) {
+        let fullPath = commandName.startsWith('/')
+            ? commandName
+            : `${context.cwd[accountName]}/${commandName}`;
+        fullPath = path.resolve(fullPath);
+        targetPaths = [fullPath];
+    } else {
+        const pathDirs = (context.env['PATH'] || '/usr/local/bin:/usr/bin:/bin').split(':');
+        targetPaths = pathDirs.map(dir => `${dir.replace(/\/+$/, '')}/${commandName}`);
+    }
+
+    for (const filePath of targetPaths) {
         const file = context.files[filePath];
 
         if (!file || file.type !== 'file') continue;
@@ -29,7 +39,7 @@ export function resolveVirtualCommand(
             // Return a function that yields a permission denied error
             return async () => ({
                 stdout: '',
-                stderr: `bash: ${commandName}: Permission denied\n`,
+                stderr: `bash: ${commandName}: permission denied\n`,
                 code: 126,
             });
         }

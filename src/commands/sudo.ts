@@ -48,5 +48,5 @@ export const sudo: CommandFn = async (
     const subArgs = args.slice(1);
     const subRaw = subCommand + ' ' + subArgs.join(' ');
 
-    return handleExecution(subRaw, subCommand, subArgs, context, userId ?? '', env ?? {}, stdin);
+    return handleExecution(subRaw, subCommand, subArgs, context, 'root', env ?? {}, stdin);
 };
