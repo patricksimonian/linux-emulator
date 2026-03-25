@@ -39,7 +39,7 @@ export const cat: CommandFn = async (
         }
 
         return {
-            stdout: (file.content ?? '') + '\n',
+            stdout: file.content ?? '',
             code: 0,
         };
     } else {

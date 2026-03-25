@@ -4,9 +4,12 @@ export const envCmd: CommandFn = async (
     raw,
     command,
     args,
-    context
+    context,
+    accountName,
+    env
 ): Promise<CommandOutput> => {
-    const envLines = Object.entries(context.env)
+    const activeEnv = env ?? context.env;
+    const envLines = Object.entries(activeEnv)
         .map(([k, v]) => `${k}=${v}`)
         .join('\n');
     return { stdout: envLines + '\n', code: 0 };

@@ -24,8 +24,7 @@ export const mkdir: CommandFn = async (
     const existing = context.files[fullPath];
 
     if (existing) {
-        existing.id = crypto.randomUUID();
-        return { stdout: '', code: 0 };
+        return { stderr: `${command}: cannot create directory '${folder}': File exists\n`, stdout: '', code: 1 };
     }
 
     try {
